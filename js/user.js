@@ -20,6 +20,9 @@ var createUser = function(){
     // lastCard:上家出的卡, currentPlusNumber当前累加的牌，“+4”、“+2”的功能牌累加，包括当前lastCard
     user.active = function(lastCard, currentPlusNumber){
         //TODO 取消其他player的激活状态 并显示自己为激活
+        console.log('user activating')
+        console.log(lastCard)
+        console.log(currentPlusNumber)
         pageNotifier.notifyActive(user.index);
 
         // 把所有卡设置为不能出

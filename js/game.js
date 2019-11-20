@@ -3,12 +3,23 @@
  */
 
 var game = {};
-game.PLAYER_COUNT = 3;
-game.INIT_CARD_COUNT = 7;
+var PLAYER_COUNT = 6;
+var INIT_CARD_COUNT = 7;
 
-game.playerAvatars = new Array(game.PLAYER_COUNT);
-game.playerNames = new Array(game.PLAYER_COUNT);
-game.playerScores = [0,0,0,0,0,0];
+// var playerAvatars = new Array(PLAYER_COUNT);
+// var playerNames = new Array(PLAYER_COUNT);
+var playerAvatars;
+var playerNames;
+var playerScores;
+// var playerScores = [0,0,0,0,0,0];
+
+function nextPlayer(index) {
+    return (index + 1) % PLAYER_COUNT;
+}
+
+function prevPlayer(index) {
+    return (index - 1 + PLAYER_COUNT) % PLAYER_COUNT;
+}
 
 game.start = function(){
     // 初始化一些全局的东西
@@ -18,10 +29,10 @@ game.start = function(){
         , "已故的迈克尔▪杰克逊", "V字仇杀队", "大龙猫", "往右歪的鸣人", "海绵叔叔", "小和尚"];
 
     var j = 0;
-    for (var i = 0; i < game.PLAYER_COUNT; i ++){
+    for (var i = 0; i < PLAYER_COUNT; i ++){
         j = parseInt(Math.random() * avatars.length);
-        game.playerAvatars[i] = avatars.splice(j, 1);
-        game.playerNames[i] = names.splice(j, 1);
+        playerAvatars[i] = avatars.splice(j, 1);
+        playerNames[i] = names.splice(j, 1);
     }
 
     game.currentSeason = 0;
@@ -32,7 +43,7 @@ game.start = function(){
     // 游戏是否自动结束
     game.autoEnd = false;
 
-    pageNotifier.setPlayerInfo(game.playerAvatars, game.playerNames);
+    pageNotifier.setPlayerInfo(playerAvatars, playerNames);
 
     game.onStart();
 };
@@ -40,10 +51,6 @@ game.start = function(){
 game.onStart = function(){
     // game.players
     game.createPlayers();
-
-    // 显示场次信息
-    game.currentSeason ++;
-    pageNotifier.showCurrentSeason(game.currentSeason);
 
     // 初始化牌
     game.cards = getShuffledCards();
@@ -62,8 +69,10 @@ game.onStart = function(){
 
     // 暂时从user开始，以后会随机开始位置
     game.direction = true;
-    game.currentActivePlayerIndex = 0;
-    game.players[game.currentActivePlayerIndex].active(game.lastCard, game.plusCard);
+
+    game.lastPlayer = prevPlayer(game.position);
+    // game.currentActivePlayerIndex = 0;
+    // game.players[game.currentActivePlayerIndex].active(game.lastCard, game.plusCard);
 };
 
 game.restart = function(){
@@ -75,14 +84,15 @@ game.restart = function(){
 };
 
 game.createPlayers = function(){
-    game.players = new Array(game.PLAYER_COUNT);
-    game.players[0] = createUser();
-    game.user = game.players[0];
-    game.players[0].setGame(game, 0, pageNotifier);
-    for(var i = 1; i < game.PLAYER_COUNT; i ++){
-        game.players[i] = createRobot();
-        game.players[i].setGame(game, i, pageNotifier);
-    }
+    game.players = new Array(PLAYER_COUNT);
+    game.players[game.position] = createUser();
+    game.user = game.players[game.position];
+    game.players[game.position].setGame(game, game.position, pageNotifier);
+    for(var i = 0; i < PLAYER_COUNT; i ++) 
+        if (i != game.position) {
+            game.players[i] = createRobot();
+            game.players[i].setGame(game, i, pageNotifier);
+        }
 };
 
 game.getNextPlayer = function(){
@@ -92,11 +102,11 @@ game.getNextPlayer = function(){
         game.currentActivePlayerIndex --;
     }
 
-    if (game.currentActivePlayerIndex >= game.PLAYER_COUNT){
-        game.currentActivePlayerIndex = game.currentActivePlayerIndex - game.PLAYER_COUNT;
+    if (game.currentActivePlayerIndex >= PLAYER_COUNT){
+        game.currentActivePlayerIndex = game.currentActivePlayerIndex - PLAYER_COUNT;
     }
     if (game.currentActivePlayerIndex < 0){
-        game.currentActivePlayerIndex = game.currentActivePlayerIndex + game.PLAYER_COUNT;
+        game.currentActivePlayerIndex = game.currentActivePlayerIndex + PLAYER_COUNT;
     }
     return game.players[game.currentActivePlayerIndex];
 };
@@ -107,8 +117,8 @@ game.backDirection = function(){
 };
 
 game.initPlayerCards = function(){
-    for(var i = 0; i < game.PLAYER_COUNT; i ++){
-        game.players[i].getCards(game.popCards(game.INIT_CARD_COUNT));
+    for(var i = 0; i < PLAYER_COUNT; i ++){
+        game.players[i].getCards(game.popCards(INIT_CARD_COUNT));
     }
 };
 
@@ -146,17 +156,18 @@ game.sendCard = function(playerIndex, card, cardIndex){
         // 1.正常色卡，没牌出
         // 2.连加后没牌出
 
+        game.client.sendCard(null);
         if (0 == game.plusCard){
             nextPlayer = game.players[playerIndex];
             nextPlayer.getCards(game.popCards(1));
             nextPlayer = game.getNextPlayer();
             game.delayActive(nextPlayer);
-            consoleLog(" 没有出牌，拿一张牌", game.playerNames[playerIndex] + "：");
+            consoleLog(" 没有出牌，拿一张牌", playerNames[playerIndex] + "：");
             return 0;
         } else{
             nextPlayer = game.players[playerIndex];
             nextPlayer.getCards(game.popCards(game.plusCard));
-            consoleLog(" 没有出牌，拿" + game.plusCard + "张牌" , game.playerNames[playerIndex] + "：");
+            consoleLog(" 没有出牌，拿" + game.plusCard + "张牌" , playerNames[playerIndex] + "：");
             game.plusCard = 0;
             game.lastCard = createCard(TYPE_ALL, 1, game.lastCard.color);
             game.delayActive(nextPlayer);
@@ -167,20 +178,23 @@ game.sendCard = function(playerIndex, card, cardIndex){
     isCardCanSend(game.lastCard, card);
     if ( ! card.canSend){
         // alert(playerNames[playerIndex] + "： " + COLORS[card.color] + " " + CONTENT[card.type][card.content] + "\n出牌错误，请重新出牌. " + playerIndex + "号");
-        consoleLog(" 出牌错误，重新出牌" , game.playerNames[playerIndex] + "：");
+        consoleLog(" 出牌错误，重新出牌" , playerNames[playerIndex] + "：");
         game.delayActive(game.players[playerIndex]);
         return 0;
     }
 
     game.outCount ++;
+    game.lastPlayer = playerIndex;
 
     // 出牌动画
-    if (playerIndex == 0){
+    if (playerIndex == game.user.index){
         // 如果是玩家出牌，则有不同的动画效果
+        game.client.sendCard(card);
         pageNotifier.showRobotSendCardAnim(playerIndex, card, game.outCount);
     } else {
         // 机器人出牌动画
-        pageNotifier.showRobotSendCardAnim(playerIndex, card, game.outCount);
+        // pageNotifier.showRobotSendCardAnim(playerIndex, card, game.outCount);
+        console.log("This line should not be run.")
     }
 
     // 桌子上牌过多
@@ -190,21 +204,22 @@ game.sendCard = function(playerIndex, card, cardIndex){
         setTimeout(function(){pageNotifier.clearOutCardWhenTooMany(c, 4);}, 1000);
     }
 
-    consoleLog(COLORS[card.color] + " " + CONTENT[card.type][card.content], game.playerNames[playerIndex] + "： ");
+    consoleLog(COLORS[card.color] + " " + CONTENT[card.type][card.content], playerNames[playerIndex] + "： ");
 
+/*
     // 判断当前player是否还有牌，没牌的话结束游戏
     if (game.players[playerIndex].cards.length <= 0){
 
         game.autoEnd = true;
 
         // 计分
-        for (var ii = 0; ii < game.PLAYER_COUNT; ii ++){
+        for (var ii = 0; ii < PLAYER_COUNT; ii ++){
             playerScores[ii] += getCardsScore(game.players[ii].cards);
         }
 
         game.showPlayerOrder();
 
-        setTimeout(function(){alert("游戏结束：" + game.playerNames[playerIndex] + " 获胜");}, 600);
+        setTimeout(function(){alert("游戏结束：" + playerNames[playerIndex] + " 获胜");}, 600);
         return ;
     }
 
@@ -227,26 +242,35 @@ game.sendCard = function(playerIndex, card, cardIndex){
     } else {
         player = game.getNextPlayer();
     }
+*/
 
     game.delayActive(player);
 
     //TODO 0 UNO
 };
 
+game.sendOtherCard = function(playerIndex, card) {
+    if (game.lastPlayer == game.user.index)
+        return 0;
+    game.outCount ++;
+    pageNotifier.showRobotSendCardAnim(game.lastPlayer, card, game.outCount);
+    game.lastPlayer = playerIndex;
+}
+
 var orderUser = function(p1, p2){
     if (p1.score <= p2.score){
         return 1;
-    } else{
+    } else {
         return -1;
     }
 };
 
 game.showPlayerOrder = function(){
-    var us = new Array(game.PLAYER_COUNT);
-    for (var i = 0; i < game.PLAYER_COUNT; i ++){
+    var us = new Array(PLAYER_COUNT);
+    for (var i = 0; i < PLAYER_COUNT; i ++){
         var u = {};
-        u.name = game.playerNames[i];
-        u.score = game.playerScores[i];
+        u.name = playerNames[i];
+        u.score = playerScores[i];
         us[i] = u;
     }
     us.sort(orderUser);
