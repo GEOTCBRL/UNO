@@ -23,6 +23,12 @@ function prevPlayer(index) {
 
 game.start = function(){
     // 初始化一些全局的东西
+    console.log(PLAYER_COUNT);
+    playerAvatars = new Array(PLAYER_COUNT);
+    playerScores = new Array(PLAYER_COUNT);
+    for (var i = 0; i < PLAYER_COUNT; i ++)
+        playerScores[i] = 0;
+
     var avatars = ["avatar_01.jpg", "avatar_02.jpg", "avatar_03.jpg", "avatar_04.jpg", "avatar_05.jpg", "avatar_06.jpg"
     , "avatar_07.jpg", "avatar_08.jpg", "avatar_09.jpg", "avatar_10.jpg", "avatar_11.jpg", "avatar_12.jpg"];
     var names = ["往左歪的鸣人", "占卜婆婆", "胡子叔叔", "草帽路飞", "某不知名刺客", "呲牙的索隆"
@@ -38,7 +44,7 @@ game.start = function(){
     game.currentSeason = 0;
 
     //初始化排名信息
-    game.showPlayerOrder();
+    // game.showPlayerOrder();
 
     // 游戏是否自动结束
     game.autoEnd = false;
@@ -56,7 +62,7 @@ game.onStart = function(){
     game.cards = getShuffledCards();
 
     // 初始化Player手牌
-    game.initPlayerCards();
+    // game.initPlayerCards();
 
     // game.outCount
     game.outCount = 0;
@@ -133,6 +139,19 @@ game.popCards = function(count){
         outCards[i] = game.cards.pop();
     }
     return outCards;
+};
+
+game.updateUserCards = function(data) {
+    for (var i = 0; i < PLAYER_COUNT; i ++) {
+        var playerCard = data[Integer.toString(i)];
+        if (i == game.position) {
+            // Here player card is string array.
+            game.players[i].getCards(playerCard);
+        } else {
+            // Here player card is number.
+            game.players[i].getCards(playerCard);
+        }
+    }
 };
 
 /**

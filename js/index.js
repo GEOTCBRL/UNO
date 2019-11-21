@@ -221,7 +221,8 @@ $(function(){
     if (test_func){
         test();
     } else {
-        game.start();
+        // game.start();
+        client.main();
     }
 });
 

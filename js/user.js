@@ -13,7 +13,7 @@ var createUser = function(){
     };
 
     user.getCards = function(cards){
-        user.cards = user.cards.concat(cards);
+        user.cards = cards;
         pageNotifier.notifyUserGetCards(cards, user.cards);
     };
 
