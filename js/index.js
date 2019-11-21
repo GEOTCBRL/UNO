@@ -1,7 +1,3 @@
-/**
- * Created by yu on 2016/10/13.
- */
-
 var pageNotifier = {};
 
 pageNotifier.notifyActive = function(index){
@@ -15,9 +11,12 @@ pageNotifier.notifyActive = function(index){
 };
 
 pageNotifier.notifyUserGetCards = function(newCards, totalCards){
+    $(".my-cards").html("");
+
     for (var i = 0; i < newCards.length; i ++){
         $(".my-cards").append($(getCardHtml(newCards[i], i)));
     }
+
     var id = "robot-" + 0;
     $("#"+ id + " .left-card-number").text(totalCards.length);
     if (totalCards.length <= 1){
@@ -37,6 +36,7 @@ pageNotifier.notifyUserCardStateChange = function(cards, fromIndex, size){
     var cardsElem = $(".my-cards").children();
     var endIndex = fromIndex + size;
     for (var i = fromIndex; i < endIndex; i ++){
+        cards[i].canSend = true;
         if (cards[i].canSend){
             $(cardsElem[i]).addClass("card-can-send");
             $(cardsElem[i]).removeClass("card-can-not-send");
@@ -70,8 +70,8 @@ pageNotifier.notifyUserCardChange = function (cards) {
 
 pageNotifier.notifyCardsNumberChanged = function(robotIndex, totalCards){
     var id = "robot-" + robotIndex;
-    $("#"+ id + " .left-card-number").text(totalCards.length);
-    if (totalCards.length <= 1){
+    $("#"+ id + " .left-card-number").text(totalCards);
+    if (totalCards <= 1){
         $("#"+id + " .left-card-number").addClass("left-one");
     } else{
         $("#"+id + " .left-card-number").removeClass("left-one");
@@ -155,6 +155,7 @@ pageNotifier.showUserOrder = function(us){
 };
 
 pageNotifier.clearOutCardWhenTooMany = function(currentCount, toCount){
+    client.waitCnt += 2;
     var mLeft = ((currentCount - toCount) * 55);
 
     var children = $(".wrapper").children(".sended-card");

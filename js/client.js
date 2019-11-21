@@ -1,4 +1,6 @@
 var client = {};
+game.client = client;
+client.waitCnt = 0;
 
 function setupClient(ws) {
 	ws.onopen = function(evt) {
@@ -38,7 +40,10 @@ client.parse = function(content) {
 	if (content['position'] != undefined) {
 		client.init(content);
 	} else if (content['current player'] != undefined) {
-		client.display(content);
+		client.waitCnt ++;
+		console.log('wait time:')
+		console.log(500 * client.waitCnt)
+		setTimeout(function(){client.display(content);}, 500 * client.waitCnt)
 	} else if (content['invalid'] != undefined) {
 		// invalid operation
 		console.log('invalid operation')
@@ -48,14 +53,16 @@ client.parse = function(content) {
 client.init = function(content) {
 	playerNames = content.player;
 	game.position = content.position;
+	PLAYER_COUNT = playerNames.length
 	console.log('init')
 	console.log(playerNames)
 	console.log(game.position)
 	game.start()
 }
 
-convertType = function(card) {
-	var c = card.split('_');
+convertType = function(_card) {
+	var c = _card.split('_');
+	var card = {};
 	card.color = c[0];
 	card.content = c[1];
 	console.log(card);
@@ -87,7 +94,7 @@ convertType = function(card) {
 		};
 		default: {
 			card.type = 0;
-			card.content = card.content[0];
+			card.content = parseInt(card.content);
 			break;
 		};
 	}
@@ -100,11 +107,28 @@ convertType = function(card) {
 }
 
 client.display = function(content) {
+	console.log('wait count')
+	console.log(client.waitCnt)
+
+	console.log('display infomation')
+	console.log(content)
+	game.state = content.state;
+	client.displayLock = true;
+
 	game.currentActivePlayerIndex = content['current player']
-	if (content.direction == 0)
+	var flag = false;
+	if (content.direction == 0) {
+		if (!game.direction)
+			flag = true;
 		game.direction = true;
-	else
+	}
+	else {
+		if (game.direction)
+			flag = true;
 		game.direction = false;
+	}
+	if (flag)
+		pageNotifier.notifyDirectionChanged(game.direction)
 
 	var lastCard = content['top card'];
 	var lastColor = content['color'];
@@ -141,7 +165,7 @@ client.display = function(content) {
 		};
 		default: {
 			card.type = 0;
-			card.content = card.content[0];
+			card.content = parseInt(card.content);
 			break;
 		};
 	}
@@ -152,20 +176,25 @@ client.display = function(content) {
 	console.log(card)
 
 	var cardSet = [];
-	var pos = Integer.toString(game.position);
+	var pos = game.position.toString();
 	for (var i = 0; i < content[pos].length; i ++)
 		cardSet.push(convertType(content[pos][i]))
+	console.log(cardSet);
 	content[pos] = cardSet;
 	console.log(content);
 	game.updateUserCards(content);
 
-	if (game.currentActivePlayerIndex == game.user.index)
-		game.players[game.currentActivePlayerIndex].activate(card, 0)
-	else
-		game.sendOtherCard(game.currentActivePlayerIndex, card)
+	console.log('current active player index')
+	console.log(game.currentActivePlayerIndex)
+	var p = content['current player'];
+	game.sendOtherCard(p, card);
+	if (p == game.user.index) {
+		game.players[p].active(card, 0)
+		client.waitCnt = 0;
+	}
 }
 
-client.sendCard = function(card) {
+client.sendCard = function(card, cardIndex) {
 	var data = {};
 	var typeMap = {
 		"全色": 'W',
@@ -174,18 +203,13 @@ client.sendCard = function(card) {
 		"+2": "+2",
 		"+4": "+4"
 	};
+	data.state = game.state;
 	if (card == null) {
 
 	} else {
 		console.log(COLORS);
 		data.color = COLORS[card.color];
-		data.card = CONTENT[card.type][card.content];
-		console.log(data)
-		if (data.card in typeMap) {
-			data.card = typeMap[data.card];
-		} else {
-			data.card = Integer.toString(data.card);
-		}
+		data.card = cardIndex;
 	}
 	var msg = {token: client.token, 
 		request: 'action', 
@@ -204,7 +228,9 @@ client.main = function() {
 	var DEBUG = true;
 
 	if (DEBUG) {
+		// client.token = '183.172.85.120:14285/1/hgr/1';
 		client.token = '127.0.0.1:14285/1/hgr/1';
+		client.token_b64 = client.token;
 		client.ws = new WebSocket("ws://" + client.token);
 		setupClient(client.ws);
 	}

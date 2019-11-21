@@ -1,7 +1,3 @@
-/**
- * Created by 从楠楠 on 2016/10/14.
- */
-
 var createUser = function(){
     var user = {};
 
@@ -14,6 +10,8 @@ var createUser = function(){
 
     user.getCards = function(cards){
         user.cards = cards;
+        console.log(cards);
+        console.log(user.cards);
         pageNotifier.notifyUserGetCards(cards, user.cards);
     };
 
@@ -22,7 +20,6 @@ var createUser = function(){
         //TODO 取消其他player的激活状态 并显示自己为激活
         console.log('user activating')
         console.log(lastCard)
-        console.log(currentPlusNumber)
         pageNotifier.notifyActive(user.index);
 
         // 把所有卡设置为不能出
@@ -33,7 +30,7 @@ var createUser = function(){
 
         // 没找到能出的牌
         if ( ! user.cards.some(function (e) {return e.canSend;})){
-            setTimeout(function(){user.game.sendCard(user.index, null, -1);}, 300);
+            // setTimeout(function(){user.game.sendCard(user.index, null, -1);}, 300);
             return 0;
         }
 
@@ -85,9 +82,9 @@ var createUser = function(){
         if (card.type == TYPE_ALL){
             card.color = user.choosedColor;
         }
-        user.cards.splice(card.currentIndex, 1);
-        pageNotifier.notifyCardsNumberChanged(user.index, user.cards);
-        pageNotifier.notifyUserCardChange(game.user.cards);
+        // user.cards.splice(card.currentIndex, 1);
+        // pageNotifier.notifyCardsNumberChanged(user.index, user.cards);
+        // pageNotifier.notifyUserCardChange(game.user.cards);
         user.game.sendCard(user.index, card, card.currentIndex);
     };
 

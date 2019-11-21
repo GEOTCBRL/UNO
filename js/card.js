@@ -265,12 +265,10 @@ var isCardCanSend = function(lastCard, card){
     }
 };
 var isCardsCanSend = function(lastCards, allCards){
-    if(null == lastCards){
-        for (var i = 0; i < allCards.length; i ++){
-            allCards[i].canSend = true;
-        }
-        return ;
+    for (var i = 0; i < allCards.length; i ++){
+        allCards[i].canSend = true;
     }
+    return ;
 
     for (i = 0; i < allCards.length; i ++){
         isCardCanSend(lastCards, allCards[i]);

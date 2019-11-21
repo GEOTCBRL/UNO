@@ -13,8 +13,8 @@ var createRobot = function(){
     };
 
     robot.getCards = function(cards){
-        robot.cards = robot.cards.concat(cards);
-        pageNotifier.notifyCardsNumberChanged(robot.index, robot.cards);
+        // robot.cards = robot.cards.concat(cards);
+        pageNotifier.notifyCardsNumberChanged(robot.index, cards);
     };
 
     // lastCard:上家出的卡, currentPlusNumber当前累加的牌，“+4”、“+2”的功能牌累加，包括当前lastCard

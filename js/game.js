@@ -1,7 +1,3 @@
-/**
- * Created by 从楠楠 on 2016/10/14.
- */
-
 var game = {};
 var PLAYER_COUNT = 6;
 var INIT_CARD_COUNT = 7;
@@ -76,7 +72,7 @@ game.onStart = function(){
     // 暂时从user开始，以后会随机开始位置
     game.direction = true;
 
-    game.lastPlayer = prevPlayer(game.position);
+    game.lastPlayer = game.position;
     // game.currentActivePlayerIndex = 0;
     // game.players[game.currentActivePlayerIndex].active(game.lastCard, game.plusCard);
 };
@@ -143,7 +139,7 @@ game.popCards = function(count){
 
 game.updateUserCards = function(data) {
     for (var i = 0; i < PLAYER_COUNT; i ++) {
-        var playerCard = data[Integer.toString(i)];
+        var playerCard = data[i.toString()];
         if (i == game.position) {
             // Here player card is string array.
             game.players[i].getCards(playerCard);
@@ -175,7 +171,7 @@ game.sendCard = function(playerIndex, card, cardIndex){
         // 1.正常色卡，没牌出
         // 2.连加后没牌出
 
-        game.client.sendCard(null);
+        game.client.sendCard(null, 0);
         if (0 == game.plusCard){
             nextPlayer = game.players[playerIndex];
             nextPlayer.getCards(game.popCards(1));
@@ -202,14 +198,14 @@ game.sendCard = function(playerIndex, card, cardIndex){
         return 0;
     }
 
-    game.outCount ++;
+    // game.outCount ++;
     game.lastPlayer = playerIndex;
 
     // 出牌动画
     if (playerIndex == game.user.index){
         // 如果是玩家出牌，则有不同的动画效果
-        game.client.sendCard(card);
-        pageNotifier.showRobotSendCardAnim(playerIndex, card, game.outCount);
+        game.client.sendCard(card, cardIndex);
+        // pageNotifier.showRobotSendCardAnim(playerIndex, card, game.outCount);
     } else {
         // 机器人出牌动画
         // pageNotifier.showRobotSendCardAnim(playerIndex, card, game.outCount);
@@ -217,10 +213,10 @@ game.sendCard = function(playerIndex, card, cardIndex){
     }
 
     // 桌子上牌过多
-    if (game.outCount >= 11){
+    if (game.outCount >= 11) {
         var c = game.outCount;
         game.outCount = 4;
-        setTimeout(function(){pageNotifier.clearOutCardWhenTooMany(c, 4);}, 1000);
+        setTimeout(function(){pageNotifier.clearOutCardWhenTooMany(c, 4);}, 250);
     }
 
     consoleLog(COLORS[card.color] + " " + CONTENT[card.type][card.content], playerNames[playerIndex] + "： ");
@@ -263,17 +259,23 @@ game.sendCard = function(playerIndex, card, cardIndex){
     }
 */
 
-    game.delayActive(player);
+    // game.delayActive(player);
 
     //TODO 0 UNO
 };
 
 game.sendOtherCard = function(playerIndex, card) {
-    if (game.lastPlayer == game.user.index)
-        return 0;
     game.outCount ++;
     pageNotifier.showRobotSendCardAnim(game.lastPlayer, card, game.outCount);
+    console.log('in sending card, last player')
+    console.log(game.lastPlayer)
     game.lastPlayer = playerIndex;
+
+    if (game.outCount >= 11){
+        var c = game.outCount;
+        game.outCount = 4;
+        setTimeout(function(){pageNotifier.clearOutCardWhenTooMany(c, 4);}, 250);
+    }
 }
 
 var orderUser = function(p1, p2){
