@@ -1,6 +1,3 @@
-/**
- * Created by 从楠楠 on 2016/10/13.
- */
 // {
 //     type: number(普通牌) 0 |func（功能牌） 1 | all（万能牌）2,
 //     content: [0-9] | [+2(0), back(1), stop(2)]| [+4(0), all(1)]，

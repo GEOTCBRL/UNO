@@ -1,7 +1,3 @@
-/**
- * Created by 从楠楠 on 2016/10/14.
- */
-
 var createRobot = function(){
     var robot = {};
 

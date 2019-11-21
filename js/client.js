@@ -20,14 +20,14 @@ function setupClient(ws) {
 }
 
 client.handle = function(event) {
-	if (event.origin != 'saiblo.com')
-		return
+	/*if (event.origin != 'saiblo.com')
+		return*/
 	let msg = event.data;
 	if (msg.message == "init_player_player") {
 		event.source.postMessage({message: 'init_successfully', data: msg.token}, event.origin)
 		client.token_b64 = msg['token'];
 		console.log(client.token_b64);
-		token = atob(token_b64);
+		token = atob(client.token_b64);
 		client.token = token;
 		console.log(token);
 
